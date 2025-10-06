@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    
+    <!-- Meta tags para PWA -->
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mis Finanzas">
+    <meta name="description" content="Una aplicación de finanzas personales para gestionar ingresos y gastos.">
+  
+    <!-- Icono App -->
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="500x500" href="icon-500x500.png">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    
+    <title>Mis Finanzas PWA</title>
+    
+    <!-- Enlace al Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Enlace a la hoja de estilos -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- Iconos (usaremos Phosphor Icons para un look moderno) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+
+    <!-- Contenedor principal de la aplicación -->
+    <div id="app-container">
+
+        <!-- ===== VISTA: PANEL PRINCIPAL ===== -->
+        <main id="dashboard-view" class="view active">
+            <header class="main-header">
+                <h1>Resumen Financiero</h1>
+                <div class="period-selector-wrapper">
+                    <label for="period-selector" class="sr-only">Seleccionar Período</label>
+                    <select id="period-selector">
+                        <option value="currentMonth">Este Mes</option>
+                        <option value="lastMonth">Mes Anterior</option>
+                        <option value="currentYear">Este Año</option>
+                        <option value="all">Ver Todo</option>
+                    </select>
+                </div>
+            </header>
+
+            <section class="summary-cards">
+                <div class="card income-card">
+                    <h3>Ingresos Totales</h3>
+                    <p id="total-income">$0.00</p>
+                </div>
+                <div class="card expense-card">
+                    <h3>Gastos Totales</h3>
+                    <p id="total-expense">$0.00</p>
+                </div>
+                <div class="card balance-card">
+                    <h3>Balance del Mes</h3>
+                    <p id="month-balance">$0.00</p>
+                </div>
+            </section>
+
+            <section class="transactions-list-section">
+                <h2>Transacciones Recientes</h2>
+                <div id="transactions-list">
+                    <!-- Las transacciones se renderizarán aquí -->
+                </div>
+            </section>
+
+            <button id="add-transaction-fab" class="fab" aria-label="Agregar nueva transacción">
+                <i class="ph ph-plus"></i>
+            </button>
+        </main>
+
+        <!-- ===== VISTA: ANÁLISIS Y REPORTES ===== -->
+        <main id="analysis-view" class="view">
+            <header class="main-header">
+                <h1>Análisis de Gastos</h1>
+            </header>
+            <section class="chart-container">
+                <canvas id="expense-chart"></canvas>
+                <p id="chart-no-data" class="hidden">No hay datos de gastos para mostrar en el período seleccionado.</p>
+            </section>
+        </main>
+
+        <!-- ===== VISTA: GESTIÓN DE CATEGORÍAS ===== -->
+        <main id="categories-view" class="view">
+            <header class="main-header">
+                <h1>Gestionar Categorías</h1>
+            </header>
+            <section class="category-management">
+                <form id="add-category-form">
+                    <h3>Nueva Categoría</h3>
+                    <div class="form-group">
+                        <label for="category-name">Nombre</label>
+                        <input type="text" id="category-name" placeholder="Ej: Transporte" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category-type">Tipo</label>
+                        <select id="category-type">
+                            <option value="gasto">Gasto</option>
+                            <option value="ingreso">Ingreso</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Agregar Categoría</button>
+                </form>
+
+                <div class="category-lists">
+                    <div class="category-list-wrapper">
+                        <h3>Categorías de Gastos</h3>
+                        <ul id="expense-categories-list"></ul>
+                    </div>
+                    <div class="category-list-wrapper">
+                        <h3>Categorías de Ingresos</h3>
+                        <ul id="income-categories-list"></ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Barra de navegación inferior fija -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-view="dashboard-view" aria-label="Panel Principal">
+                <i class="ph-fill ph-house"></i>
+                <span>Panel</span>
+            </button>
+            <button class="nav-btn" data-view="analysis-view" aria-label="Análisis">
+                <i class="ph ph-chart-pie-slice"></i>
+                <span>Análisis</span>
+            </button>
+            <button class="nav-btn" data-view="categories-view" aria-label="Categorías">
+                <i class="ph ph-tag"></i>
+                <span>Categorías</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <!-- ===== MODAL PARA AÑADIR/EDITAR TRANSACCIÓN ===== -->
+    <div id="transaction-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="modal-title">Nueva Transacción</h2>
+                <button id="close-modal-btn" class="close-btn" aria-label="Cerrar modal"><i class="ph ph-x"></i></button>
+            </header>
+            <form id="transaction-form">
+                <input type="hidden" id="transaction-id">
+                
+                <div class="form-group type-selector">
+                    <input type="radio" id="type-gasto" name="tipo" value="gasto" checked>
+                    <label for="type-gasto">Gasto</label>
+                    <input type="radio" id="type-ingreso" name="tipo" value="ingreso">
+                    <label for="type-ingreso">Ingreso</label>
+                </div>
+                
+                <div class="form-group">
+                    <label for="monto">Monto</label>
+                    <input type="number" id="monto" placeholder="0.00" required step="0.01" min="0.01">
+                </div>
+
+                <div class="form-group">
+                    <label for="categoria">Categoría</label>
+                    <select id="categoria" required></select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="fecha">Fecha</label>
+                    <input type="date" id="fecha" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="descripcion">Descripción (Opcional)</label>
+                    <textarea id="descripcion" rows="3" placeholder="Ej: Compras del supermercado"></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">Guardar Transacción</button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Librería de Gráficos Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Script principal de la aplicación -->
+    <script src="app.js"></script>
+
+</body>
+</html>
